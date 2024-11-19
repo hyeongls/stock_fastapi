@@ -4,6 +4,9 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM
+import requests
+from bs4 import BeautifulSoup
+
 
 
 def get_stock_code(api_key, company_name):
@@ -122,3 +125,30 @@ def predict_next_day_price(closing_prices):
     return predicted_price[0][0]
 
 
+def get_korean_company_name(stock_code):
+    """
+    주식 종목 코드를 이용하여 한국 기업명을 반환하는 함수
+    :param stock_code: str, 주식 종목 코드 (예: '005930')
+    :return: str, 기업명 또는 오류 메시지
+    """
+    try:
+        # KRX 공식 종목 검색 URL
+        url = f"https://finance.naver.com/item/main.nhn?code={stock_code}"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+
+        # GET 요청
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return f"Error: Unable to access Naver Finance (Status Code: {response.status_code})"
+
+        # BeautifulSoup으로 HTML 파싱
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # 기업명 추출
+        company_name = soup.find('div', {'class': 'wrap_company'}).find('h2').text.strip()
+        return company_name
+
+    except AttributeError:
+        return "Error: Unable to find company name. Please check the stock code."
+    except Exception as e:
+        return f"Error: {str(e)}"
