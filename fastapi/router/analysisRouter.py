@@ -99,55 +99,58 @@ global_filter = Filter(
 
 #비즈니스 로직
 
-# 주식 선택 화면(/select)
-def get_filtered_stocks(stock_page : StockPage):
+def get_filtered_stocks(stock_id : str):
 
-    stock_list = []
+    data_code = stock_id + ".KS"
+    data = get_full_stock_info(data_code)
+    
 
-    for i in (stock_page.stock):
+    stock_id = stock_id
+    stock_name = get_korean_company_name(stock_id)
+    price = data['종가']    #종가
+    marcap = data['시가총액']
+    eps = abs(data['당기순이익'] / data['총주식수'])   
+    per = round((price / eps), 2)
+    bps = abs(data['순자산'] / data['총주식수'])
+    pbr = round((price / bps), 2)
+    roe = abs(round((data['ROE'] * 100), 2))
 
-        data_code = i.stock_id + ".KS"
-        data = get_full_stock_info(data_code)
+    close = yf.download(data_code, start="2019-01-03")["Adj Close"]
+    rsi = calculate_rsi(close)   
+    
+    # 필터링 조건
+    filtered = True
+    if global_filter.PER.checked and per > global_filter.PER.value:
+        filtered = False
+    if global_filter.PBR.checked and pbr > global_filter.PBR.value:
+        filtered = False
+    if global_filter.ROE.checked and roe < global_filter.ROE.value:
+        filtered = False
+    if global_filter.RSI.checked and rsi < global_filter.RSI.value:
+        filtered = False
+    if global_filter.marcap.checked and marcap < global_filter.marcap.value:
+        filtered = False
+
+    if(filtered):
+        stock = (Stock(stock_id=stock_id, stock_name=stock_name, price=price))
+        return stock
+    else:
+        return {"message" : "필터값에 충족하지 못합니다"}
         
 
-        stock_id = i.stock_id
-        stock_name = i.stock_name
-        price = data['종가']    #종가
-        marcap = data['시가총액']
-        eps = data['당기순이익'] / data['총주식수']   
-        per = round((price / eps, 2))
-        bps = data['순자산'] / data['총주식수']
-        pbr = ((price / bps), 2)
-        roe = round((data['ROE'] * 100),2)
+    
 
-        close = yf.download(data_code, start="2019-01-03")["Adj Close"]
-        rsi = calculate_rsi(close)   
-        
-        # 필터링 조건
-        filtered = True
-        if global_filter.PER.checked and per > global_filter.PER.value:
-            filtered = False
-        if global_filter.PBR.checked and pbr > global_filter.PBR.value:
-            filtered = False
-        if global_filter.ROE.checked and roe < global_filter.ROE.value:
-            filtered = False
-        if global_filter.RSI.checked and rsi < global_filter.RSI.value:
-            filtered = False
-        if global_filter.marcap.checked and marcap < global_filter.marcap.value:
-            filtered = False
+@router.get("/stock_page/{stock_name}")
+def select(stock_name : str):
 
-        if(filtered):
-            stock_list.append(Stock(stock_id=stock_id, stock_name=stock_name, price=price))
+    stock_id = get_stock_code(stock_name)
 
-    return stock_list
-
-@router.post("/stock_page")
-def select(stock_page : StockPage):
-
-    stocks = get_filtered_stocks(stock_page)  # 여기에 실제 데이터 가져오기 로직이 들어감
-    stock_page = StockPage(stock=stocks)
-
-    return stock_page
+    if stock_id is None:
+        return{"message" : "잘못된 기업명"}
+    
+    else:
+        stock = get_filtered_stocks(stock_id)  # 여기에 실제 데이터 가져오기 로직이 들어감
+        return stock
 
 
 # 필터 지표 값 받아오기(/filter)
@@ -186,12 +189,12 @@ def result(stock_id : str):
     price = data['종가']    #종가
     dod = data['dod']
     change_rate = round(data['등락률'], 2)    #등락률
-    eps = data['당기순이익'] / data['총주식수'] 
+    eps = abs(data['당기순이익'] / data['총주식수'])   
     per = round((price / eps), 2)
-    bps = data['순자산'] / data['총주식수']
+    bps = abs(data['순자산'] / data['총주식수'])
     pbr = round((price / bps), 2)
-    roe = round((data['ROE'] * 100), 2)
-    rsi = (calculate_rsi(close))
+    roe = abs(round((data['ROE'] * 100), 2))
+    rsi = round(calculate_rsi(close))
 
 
     stock_prices_360_days = get_stock_prices_360_days(data_code)
