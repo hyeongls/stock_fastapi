@@ -8,7 +8,7 @@ import pandas as pd
 import yfinance as yf
 import numpy as np
 from typing import List
-from lib.analysis import get_stock_code, get_full_stock_info, get_stock_prices_360_days, predict_next_day_price
+from lib.analysis import get_stock_code, get_full_stock_info, get_stock_prices_360_days, predict_next_day_price, get_korean_company_name
 
 
 router = APIRouter()
@@ -59,7 +59,7 @@ class Filter(BaseModel):
 
 #result 페이지에 넘겨주는 모델 get
 class Result(BaseModel):
-    # stock_name : str
+    stock_name : str
     price : float
     dod : float
     change_rate : float
@@ -115,9 +115,9 @@ def get_filtered_stocks(stock_page : StockPage):
         price = data['종가']    #종가
         marcap = data['시가총액']
         eps = data['당기순이익'] / data['총주식수']   
-        per = price / eps
+        per = round((price / eps, 2))
         bps = data['순자산'] / data['총주식수']
-        pbr = price / bps
+        pbr = ((price / bps), 2)
         roe = round((data['ROE'] * 100),2)
 
         close = yf.download(data_code, start="2019-01-03")["Adj Close"]
@@ -182,15 +182,15 @@ def result(stock_id : str):
     volatility = round((returns.std() * np.sqrt(250)), 2)
 
 
-    # stock_name = data.itmsNm    #종목이름
+    stock_name =  get_korean_company_name(stock_id)   #종목이름
     price = data['종가']    #종가
     dod = data['dod']
-    change_rate = data['등락률']    #등락률
+    change_rate = round(data['등락률'], 2)    #등락률
     eps = data['당기순이익'] / data['총주식수'] 
-    per = round((price / eps),2)
+    per = round((price / eps), 2)
     bps = data['순자산'] / data['총주식수']
-    pbr = round((price / bps),2)
-    roe = data['ROE'] * 100
+    pbr = round((price / bps), 2)
+    roe = round((data['ROE'] * 100), 2)
     rsi = (calculate_rsi(close))
 
 
@@ -232,7 +232,7 @@ def result(stock_id : str):
     
     
     result = Result(
-        # stock_name = stock_name,
+        stock_name = stock_name,
         price = price,
         change_rate = change_rate,
         dod = dod,
