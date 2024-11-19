@@ -7,9 +7,9 @@ from tensorflow.keras.layers import Dense, LSTM
 import requests
 from bs4 import BeautifulSoup
 
+api_key = 'Q0KvEVbeB1hi3GV3FuOvbdn%2FWJGeUcU6TTTo3x3sQSvfSH5JzLuvrzDT3hUYfN6%2F3jdXnJw1VQfFSZvEBnVuFQ%3D%3D'
 
-
-def get_stock_code(api_key, company_name):
+def get_stock_code(company_name):
     """
     공공데이터포털 API를 통해 기업명으로 종목 코드를 조회하는 함수
     """
@@ -80,7 +80,7 @@ def get_full_stock_info(ticker):
         "당기순이익": info.get('netIncomeToCommon', 'N/A'),
         "총주식수": info.get('sharesOutstanding', 'N/A'),
         "ROE": info.get('returnOnEquity', 'N/A'),
-        "순자산" : info.get('netIncomeToCommon', 'N/A'),
+        "순자산" : (info.get('netIncomeToCommon', 'N/A') / info.get('returnOnAssets', 'N/A')),
         "dod" : float(info.get('currentPrice', 'N/A')) - float(info.get('previousClose', 'N/A')),
         "등락률" : ((float(info.get('currentPrice', 'N/A')) - float(info.get('previousClose', 'N/A'))) / info.get('previousClose', 'N/A') * 100)
     }
