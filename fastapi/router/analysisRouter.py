@@ -73,6 +73,10 @@ class Result(BaseModel):
     annual_ret : float
     volatility : float
 
+#주식 명 모델 
+class Stock_name(BaseModel):
+    stock_name : str
+
 #지표 딕셔너리 전역변수
 global_filter = Filter(
     PER = Metrics(
@@ -140,13 +144,13 @@ def get_filtered_stocks(stock_id : str):
 
     
 
-@router.get("/stock_page/{stock_name}")
-def select(stock_name : str):
+@router.post("/stock_page")
+def select(stock_name : Stock_name):
 
-    stock_id = get_stock_code(stock_name)
+    stock_id = get_stock_code(stock_name.stock_name)
 
     if stock_id is None:
-        return{"message" : "잘못된 기업명"}
+        return {"message" : "잘못된 기업명"}
     
     else:
         stock = get_filtered_stocks(stock_id)  # 여기에 실제 데이터 가져오기 로직이 들어감
@@ -260,3 +264,20 @@ def closing_prices(stock_id : str):
     close = get_stock_prices_360_days(data_code)['종가']
 
     return close
+
+# @router.post("/name")
+# def closing_prices(stock_name : Stock_name):
+
+#     stock_id = get_stock_code(stock_name.stock_name) 
+
+#     if stock_id is None:
+#         return{"message" : "잘못된 기업명"}
+#     else:
+#         return stock_id
+
+# @router.get("/stock_id/{stock_id}")
+# def closing_prices(stock_id : str):
+
+#     stock_name = get_korean_company_name(stock_id)
+
+#     return stock_name
